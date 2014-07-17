@@ -1,13 +1,12 @@
  
-
-STRING modifyJSON(STRING json) := BEGINC++
+UTF8 modifyJSON(UTF8 json) := BEGINC++
 
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
 #include <iostream>
 using namespace rapidjson;
-using ::StringBuffer;  //Resolve conflict between HPCC StringBuffer and rapidjson::StringBuffer
+using ::StringBuffer;
 
   #body
 
@@ -22,24 +21,22 @@ using ::StringBuffer;  //Resolve conflict between HPCC StringBuffer and rapidjso
     d.Accept(writer);
 
     const char *str = buffer.GetString();
-
-
+    
     size32_t len = strlen(str);
     char * out = (char *)rtlMalloc(len);
-    for (unsigned i= 0; i < len; i++)
-        out[i] = str[i];
- __lenResult = len;
- __result = out;
+    memcpy(out, str, len);
+    __lenResult = len;
+    __result = out;
 ENDC++;
 
 OUTPUT(modifyJSON('{"project": "rapidjson", "stars": 10}'));
 
 projectsRecord := RECORD
-    STRING name;
+    UTF8 name;
     unsigned1 stars;
 END;
 
-dataset(projectsRecord) jsonDataset(string json) := BEGINC++
+dataset(projectsRecord) jsonDataset(UTF8 json) := BEGINC++
 
     Document d;
     d.Parse<kParseDefaultFlags>((const rapidjson::UTF8<>::Ch *)json);
